@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Net Diagnostics",
+  "version": "0.1.0",
+  "description": "Plain-language diagnosis for filtered networks and VPNs",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "net-diagnostics@example.invalid",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": ["webRequest", "storage", "alarms", "proxy"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Net Diagnostics"
+  }
+}
