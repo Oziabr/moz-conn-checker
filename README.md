@@ -35,5 +35,24 @@ of the extension, run with:
 
 hurl --variable supabase_url=https://yourproject.supabase.co \
      --variable supabase_anon_key=your_anon_key \
+     tests/checks.hurl \
      tests/upload.hurl
+
+## PowerShell diagnostics (Windows)
+
+`diagnose.ps1` runs the same checks plus things the browser extension cannot
+reach: raw TCP/UDP port probes for common VPN protocols (OpenVPN, WireGuard,
+IKEv2, PPTP), ICMP-based path MTU discovery via binary search with the DF bit
+set, and a traceroute to locate where packets stop responding.
+
+No elevation needed, no dependencies beyond what ships with Windows 10+.
+
+    Set-ExecutionPolicy -Scope Process Bypass
+    .\diagnose.ps1
+
+To distribute to users without touching execution policy:
+
+    powershell -ExecutionPolicy Bypass -File diagnose.ps1
+
+Or wrap it in a .bat file with that command so they just double-click it.
 
