@@ -140,9 +140,9 @@ function runHttps(){
     'https://www.mozilla.org/robots.txt',
     'https://www.cloudflare.com/robots.txt'
   ]
-  return Promise.allSettled(targets.map(function(u){return fetch(u,{cache:'no-store'})}))
+  return Promise.allSettled(targets.map(function(u){return fetch(u,{mode:'no-cors',cache:'no-store'})}))
     .then(function(res){
-      var ok=res.filter(function(r){return r.status==='fulfilled'&&r.value.ok}).length
+      var ok=res.filter(function(r){return r.status==='fulfilled'}).length
       if(ok===targets.length)
         done('https','ok','All HTTPS targets reachable.')
       else if(ok>0)
