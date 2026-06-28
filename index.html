@@ -5,239 +5,268 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Network check</title>
 <style>
-  :root {
-    --green:  #2e7d32; --green-bg:  #e8f5e9;
-    --yellow: #856404; --yellow-bg: #fff8e1;
-    --red:    #c62828; --red-bg:    #ffebee;
-    --muted:  #666;
-    --border: #e0e0e0;
-    --radius: 8px;
-    color-scheme: light dark;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --green:  #81c784; --green-bg:  #1b2e1c;
-      --yellow: #ffd54f; --yellow-bg: #2c2510;
-      --red:    #ef9a9a; --red-bg:    #2e1212;
-      --muted:  #999;
-      --border: #333;
-    }
-    body { background: #111; color: #eee; }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
-  h1 { font-size: 17px; font-weight: 500; margin-bottom: 20px; }
-  button { padding: 8px 18px; border: none; border-radius: var(--radius); background: #1a1a1a; color: #fff; font-size: 14px; cursor: pointer; }
-  @media (prefers-color-scheme: dark) { button { background: #eee; color: #111; } }
-  button:disabled { opacity: 0.45; cursor: default; }
-  #checks { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
-  .check { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; transition: border-color 0.2s; }
-  .check-head { display: flex; align-items: center; gap: 8px; font-weight: 500; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border); flex-shrink: 0; transition: background 0.3s; }
-  .check.running .dot { background: #999; animation: pulse 1s infinite; }
-  .check.ok     .dot { background: var(--green); }
-  .check.warn   .dot { background: var(--yellow); }
-  .check.fail   .dot { background: var(--red); }
-  .check.ok   { border-color: var(--green); background: var(--green-bg); }
-  .check.warn { border-color: var(--yellow); background: var(--yellow-bg); }
-  .check.fail { border-color: var(--red);   background: var(--red-bg); }
-  .detail { margin-top: 6px; padding-left: 17px; color: var(--muted); line-height: 1.5; }
-  .hint { margin-top: 4px; padding-left: 17px; line-height: 1.5; }
-  .hint::before { content: '→  '; opacity: 0.6; }
-  .geo-grid { margin-top: 8px; padding-left: 17px; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; }
-  .geo-grid span:nth-child(odd) { color: var(--muted); }
-  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
-  #summary { margin-top: 18px; font-size: 13px; color: var(--muted); }
-  a { color: inherit; }
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#2e7d32;--green-bg:#e8f5e9;--green-border:#a5d6a7;
+  --yellow:#6d4c00;--yellow-bg:#fff8e1;--yellow-border:#ffe082;
+  --red:#b71c1c;--red-bg:#ffebee;--red-border:#ef9a9a;
+  --text:#1a1a1a;--muted:#666;--border:#e0e0e0;--surface:#fff;--bg:#f5f5f5;
+}
+@media(prefers-color-scheme:dark){:root{
+  --green:#81c784;--green-bg:#1a2e1b;--green-border:#2e5e30;
+  --yellow:#ffd54f;--yellow-bg:#2a2000;--yellow-border:#5a4500;
+  --red:#ef9a9a;--red-bg:#2e1212;--red-border:#5e2020;
+  --text:#eee;--muted:#aaa;--border:#333;--surface:#1e1e1e;--bg:#111;
+}}
+body{font-family:system-ui,-apple-system,sans-serif;font-size:14px;background:var(--bg);color:var(--text);max-width:680px;margin:0 auto;padding:28px 16px 48px}
+h1{font-size:17px;font-weight:500;margin-bottom:20px}
+#run-btn{
+  padding:9px 22px;border:1px solid var(--border);border-radius:8px;
+  background:var(--text);color:var(--bg);font-size:14px;cursor:pointer;
+}
+#run-btn:disabled{opacity:.4;cursor:not-allowed}
+#grid{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){#grid{grid-template-columns:1fr}}
+.card{
+  border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;background:var(--surface);
+  transition:border-color .2s,background .2s;
+}
+.card.ok  {border-color:var(--green-border);background:var(--green-bg)}
+.card.warn{border-color:var(--yellow-border);background:var(--yellow-bg)}
+.card.fail{border-color:var(--red-border);background:var(--red-bg)}
+.ch{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.ico{width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.spin{width:13px;height:13px;border:2px solid var(--border);border-top-color:var(--muted);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.idle{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.lbl{font-weight:500;font-size:13px}
+.det{font-size:12px;color:var(--muted);line-height:1.5}
+.card.ok   .det{color:var(--green)}
+.card.warn .det{color:var(--yellow)}
+.card.fail .det{color:var(--red)}
+.hint{font-size:11px;color:var(--muted);margin-top:7px;padding-top:7px;border-top:1px solid var(--border);line-height:1.5;display:none}
+.geo{margin-top:6px;display:grid;grid-template-columns:auto 1fr;gap:1px 10px;font-size:11px}
+.geo span:nth-child(odd){color:var(--muted)}
+#sum{margin-top:14px;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
 <h1>Network check</h1>
-<button id="btn">Run checks</button>
-<div id="checks"></div>
-<div id="summary"></div>
+<button id="run-btn">Run checks</button>
+<div id="grid"></div>
+<div id="sum"></div>
 
 <script>
-const CHECKS = [
-  { id: 'captive',  label: 'Captive portal'          },
-  { id: 'google',   label: 'Google access'            },
-  { id: 'https',    label: 'HTTPS reachability'       },
-  { id: 'dns',      label: 'DNS vs DNS-over-HTTPS'    },
-  { id: 'geo',      label: 'Your IP and location'     },
-  { id: 'udp',      label: 'Outbound UDP (STUN probe)'},
+var DEFS=[
+  {id:'captive',label:'Captive portal'},
+  {id:'google', label:'Google access'},
+  {id:'https',  label:'HTTPS / port 443'},
+  {id:'dns',    label:'DNS vs DoH'},
+  {id:'geo',    label:'Your IP'},
+  {id:'udp',    label:'Outbound UDP'},
 ]
+var DOH='https://mozilla.cloudflare-dns.com/dns-query'
+var HOST='example.org'
+var cards={}
 
-const DOH    = 'https://mozilla.cloudflare-dns.com/dns-query'
-const TARGET = 'example.org'
-
-const $ = id => document.getElementById(id)
-const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html) e.innerHTML = html; return e }
-
-const setCheck = (id, status, detail, hint, extra) => {
-  const card = $('c-' + id)
-  if (!card) return
-  card.className = 'check ' + status
-  const det = card.querySelector('.detail')
-  const hin = card.querySelector('.hint')
-  if (det) det.textContent = detail || ''
-  if (hin) { if (hint) { hin.textContent = hint; hin.style.display = '' } else hin.style.display = 'none' }
-  if (extra) {
-    const ex = card.querySelector('.extra')
-    if (ex) ex.innerHTML = extra
-  }
+function mkCard(def){
+  var c=document.createElement('div')
+  c.className='card'
+  c.id='c-'+def.id
+  c.innerHTML=
+    '<div class="ch"><div class="ico"><div class="idle"></div></div>'+
+    '<span class="lbl">'+def.label+'</span></div>'+
+    '<div class="det">Waiting</div>'+
+    '<div class="hint"></div>'+
+    '<div class="gw"></div>'
+  cards[def.id]=c
+  return c
 }
 
-const runCaptive = async () => {
-  const isHttps = location.protocol === 'https:'
-  if (isHttps) {
-    setCheck('captive', 'warn',
-      'This page is served over HTTPS so the browser blocks HTTP probes (mixed content policy).',
-      'Open neverssl.com manually — if it loads without a login screen, no captive portal is active.')
-    return
+function spinning(id){
+  var c=cards[id];if(!c)return
+  c.querySelector('.ico').innerHTML='<div class="spin"></div>'
+  c.querySelector('.det').textContent='Checking\u2026'
+}
+
+function done(id,status,det,hint,extra){
+  var c=cards[id];if(!c)return
+  c.className='card '+status
+  var sym={ok:'\u2713',warn:'\u25b2',fail:'\u2717'}[status]
+  var col={ok:'var(--green)',warn:'var(--yellow)',fail:'var(--red)'}[status]
+  c.querySelector('.ico').innerHTML=
+    '<span style="color:'+col+';font-size:15px;font-weight:600">'+sym+'</span>'
+  c.querySelector('.det').textContent=det||''
+  var h=c.querySelector('.hint')
+  if(hint){h.textContent='\u2192 '+hint;h.style.display='block'}
+  if(extra)c.querySelector('.gw').innerHTML=extra
+}
+
+function runCaptive(){
+  spinning('captive')
+  if(location.protocol==='https:'){
+    done('captive','warn',
+      'Page is HTTPS \u2014 browser blocks HTTP probes.',
+      'Open neverssl.com manually. No login prompt = no captive portal.')
+    return Promise.resolve()
   }
-  try {
-    const r = await fetch('http://neverssl.com/', { mode: 'no-cors', redirect: 'manual', cache: 'no-store' })
-    if (r.type === 'opaqueredirect') {
-      setCheck('captive', 'fail',
-        'The network redirected the HTTP probe — a captive portal is intercepting traffic.',
-        'Connect to the network's login page (usually opens automatically), complete the sign-in, then re-run.')
-    } else {
-      setCheck('captive', 'ok', 'No captive portal redirect detected on HTTP traffic.')
+  return fetch('http://neverssl.com/',{mode:'no-cors',redirect:'manual',cache:'no-store'})
+    .then(function(r){
+      if(r.type==='opaqueredirect')
+        done('captive','fail','Captive portal detected \u2014 HTTP traffic is being redirected.',
+          'Connect via the network login page, then re-run.')
+      else
+        done('captive','ok','No captive portal redirect detected.')
+    })
+    .catch(function(){
+      done('captive','warn','HTTP probe blocked \u2014 captive portal status unknown.')
+    })
+}
+
+function runGoogle(){
+  spinning('google')
+  return fetch('https://www.google.com/',{mode:'no-cors',cache:'no-store'})
+    .then(function(){done('google','ok','google.com is reachable.')})
+    .catch(function(){
+      done('google','fail','google.com is unreachable.',
+        'Could be a regional block or a content filter on this AP.')
+    })
+}
+
+function runHttps(){
+  spinning('https')
+  var targets=[
+    'https://www.mozilla.org/robots.txt',
+    'https://www.cloudflare.com/robots.txt'
+  ]
+  return Promise.allSettled(targets.map(function(u){return fetch(u,{cache:'no-store'})}))
+    .then(function(res){
+      var ok=res.filter(function(r){return r.status==='fulfilled'&&r.value.ok}).length
+      if(ok===targets.length)
+        done('https','ok','All HTTPS targets reachable.')
+      else if(ok>0)
+        done('https','warn',ok+'/'+targets.length+' HTTPS targets reachable.',
+          'Filtering looks destination-specific (IP or domain block).')
+      else
+        done('https','fail','No HTTPS targets reachable.',
+          'Port 443 is blocked. Check for a captive portal, proxy, or content filter.')
+    })
+}
+
+function runDns(){
+  spinning('dns')
+  return Promise.allSettled([
+    fetch('https://'+HOST+'/',{mode:'no-cors',cache:'no-store'}),
+    fetch(DOH+'?name='+HOST+'&type=A',{headers:{accept:'application/dns-json'}})
+  ]).then(function(res){
+    var sysOk=res[0].status==='fulfilled'
+    var dohPromise=Promise.resolve(null)
+    if(res[1].status==='fulfilled')
+      dohPromise=res[1].value.json().catch(function(){return null})
+    return dohPromise.then(function(j){
+      var dohOk=j&&j.Answer&&j.Answer.length>0
+      if(sysOk&&dohOk)
+        done('dns','ok','System DNS and DoH both resolve correctly.')
+      else if(!sysOk&&dohOk)
+        done('dns','fail',HOST+' resolves via DoH but system DNS fails.',
+          'DNS is filtered locally. Enable DoH in your browser or VPN settings.')
+      else if(!sysOk&&!dohOk)
+        done('dns','fail','Both system DNS and DoH fail.',
+          'All DNS (ports 53 and 443) appears blocked.')
+      else
+        done('dns','warn','System DNS works but DoH endpoint is unreachable.',
+          'DoH-based VPN leak protection may not work on this network.')
+    })
+  })
+}
+
+function runGeo(){
+  spinning('geo')
+  return fetch('https://ipapi.co/json/',{cache:'no-store'})
+    .then(function(r){return r.json()})
+    .then(function(d){
+      if(!d||!d.ip)throw new Error('no ip')
+      var isVpn=d.org&&/vpn|hosting|cloud|aws|digitalocean|linode|vultr|ovh|hetzner/i.test(d.org)
+      var note=isVpn
+        ?'Traffic exits through a VPN or cloud host.'
+        :'Traffic exits through a regular ISP.'
+      var rows=[
+        ['IP',d.ip],
+        ['Location',[d.city,d.region,d.country_name].filter(Boolean).join(', ')||'\u2014'],
+        ['ISP',d.org||'\u2014'],
+      ].map(function(kv){return '<span>'+kv[0]+'</span><span>'+kv[1]+'</span>'}).join('')
+      done('geo','ok',note,null,'<div class="geo">'+rows+'</div>')
+    })
+    .catch(function(){
+      done('geo','warn','Geolocation API unreachable.',
+        'Check HTTPS reachability above \u2014 may be a transient failure.')
+    })
+}
+
+function runUdp(){
+  spinning('udp')
+  return new Promise(function(resolve){
+    var pc=null,found=false,tid=null
+    function finish(){
+      try{if(pc)pc.close()}catch(e){}
+      if(found)
+        done('udp','ok','Outbound UDP works \u2014 STUN server replied.')
+      else
+        done('udp','fail','No UDP response \u2014 outbound UDP looks blocked.',
+          'WireGuard won\'t work here. Try OpenVPN TCP or SSL VPN on port 443.')
+      resolve()
     }
-  } catch {
-    setCheck('captive', 'warn', 'HTTP probe failed — could not determine captive portal status.')
-  }
-}
-
-const runGoogle = async () => {
-  try {
-    await fetch('https://www.google.com/', { mode: 'no-cors', cache: 'no-store' })
-    setCheck('google', 'ok', 'google.com is reachable from this network.')
-  } catch {
-    setCheck('google', 'fail',
-      'google.com could not be reached.',
-      'If you are on a network in a country that blocks Google services, this is expected. Otherwise check for a firewall or content filter.')
-  }
-}
-
-const runHttps = async () => {
-  const targets = ['https://www.mozilla.org/robots.txt', 'https://www.cloudflare.com/robots.txt']
-  const results = await Promise.all(targets.map(url =>
-    fetch(url, { cache: 'no-store' }).then(() => true).catch(() => false)
-  ))
-  const pass = results.filter(Boolean).length
-  if (pass === targets.length) {
-    setCheck('https', 'ok', 'All HTTPS targets reachable — port 443 is open.')
-  } else if (pass > 0) {
-    setCheck('https', 'warn',
-      `${pass} of ${targets.length} HTTPS targets reachable — some destinations appear blocked.`,
-      'The filtering looks destination-specific (IP block or domain filter).')
-  } else {
-    setCheck('https', 'fail',
-      'No HTTPS targets reachable.',
-      'Standard web traffic on port 443 is being blocked. Check for a captive portal, aggressive proxy, or content filter.')
-  }
-}
-
-const runDns = async () => {
-  const sysOk = await fetch(`https://${TARGET}/`, { mode: 'no-cors', cache: 'no-store' }).then(() => true).catch(() => false)
-  const dohRes = await fetch(`${DOH}?name=${TARGET}&type=A`, { headers: { accept: 'application/dns-json' } }).catch(() => null)
-  const dohBody = dohRes?.ok ? await dohRes.json().catch(() => null) : null
-  const dohOk = dohBody?.Answer?.length > 0
-
-  if (sysOk && dohOk)  return setCheck('dns', 'ok', 'System DNS resolves correctly and matches DNS-over-HTTPS.')
-  if (!sysOk && dohOk) return setCheck('dns', 'fail',
-    `The name ${TARGET} exists publicly but this network refuses to resolve it locally.`,
-    'DNS is being filtered or hijacked. Switch to DoH in your browser or VPN settings.')
-  if (!sysOk && !dohOk) return setCheck('dns', 'fail',
-    'Both system DNS and DNS-over-HTTPS fail.',
-    'DNS (port 53) and HTTPS DNS (port 443) are both blocked. No names can be resolved.')
-  setCheck('dns', 'warn',
-    'System DNS works but the DNS-over-HTTPS endpoint itself is unreachable.',
-    'DoH-based VPN clients or leak-prevention tools may not work on this network.')
-}
-
-const runGeo = async () => {
-  const r = await fetch('https://ipapi.co/json/', { cache: 'no-store' }).catch(() => null)
-  if (!r?.ok) {
-    setCheck('geo', 'warn', 'Could not reach the geolocation API — check HTTPS reachability above.')
-    return
-  }
-  const d = await r.json().catch(() => null)
-  if (!d?.ip) { setCheck('geo', 'warn', 'Geolocation API returned an unexpected response.'); return }
-
-  const rows = [
-    ['IP', d.ip],
-    ['Location', [d.city, d.region, d.country_name].filter(Boolean).join(', ')],
-    ['ISP / org', d.org || d.asn || '—'],
-    ['Timezone', d.timezone || '—'],
-  ].map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join('')
-
-  const isVpn = d.org && /vpn|hosting|cloud|aws|digitalocean|linode|vultr|ovh|hetzner/i.test(d.org)
-  const note = isVpn
-    ? 'The ISP/org name suggests traffic is exiting through a VPN or cloud host.'
-    : 'Traffic appears to exit through a regular ISP (no VPN detected in the org field).'
-
-  setCheck('geo', 'ok', note, null, `<div class="geo-grid">${rows}</div>`)
-}
-
-const runUdp = () => new Promise(resolve => {
-  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] })
-  let found = false
-  pc.onicecandidate = e => { if (e.candidate?.protocol === 'udp') found = true }
-  const done = () => {
-    pc.close()
-    if (found) setCheck('udp', 'ok', 'Outbound UDP exits this network — STUN server responded via UDP.')
-    else       setCheck('udp', 'fail',
-      'No UDP candidates were gathered — outbound UDP appears to be blocked.',
-      'WireGuard and most VPN UDP modes will not work here. Try OpenVPN over TCP or an SSL VPN on port 443.')
-    resolve()
-  }
-  setTimeout(done, 4000)
-  pc.createDataChannel('p')
-  pc.createOffer().then(o => pc.setLocalDescription(o)).catch(done)
-})
-
-const RUNNERS = { captive: runCaptive, google: runGoogle, https: runHttps, dns: runDns, geo: runGeo, udp: runUdp }
-
-const btn = $('btn')
-btn.addEventListener('click', async () => {
-  btn.disabled = true
-  btn.textContent = 'Running…'
-  $('summary').textContent = ''
-
-  const container = $('checks')
-  container.innerHTML = ''
-
-  CHECKS.forEach(({ id, label }) => {
-    const card = el('div', 'check running')
-    card.id = 'c-' + id
-    card.innerHTML = `
-      <div class="check-head"><span class="dot"></span>${label}</div>
-      <div class="detail">Checking…</div>
-      <div class="hint" style="display:none"></div>
-      <div class="extra"></div>`
-    container.appendChild(card)
+    try{
+      pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]})
+      tid=setTimeout(finish,4500)
+      pc.onicecandidate=function(e){
+        if(e.candidate&&e.candidate.protocol==='udp'){
+          found=true;clearTimeout(tid);finish()
+        }
+      }
+      pc.createDataChannel('p')
+      pc.createOffer()
+        .then(function(o){return pc.setLocalDescription(o)})
+        .catch(function(){clearTimeout(tid);finish()})
+    }catch(e){
+      if(tid)clearTimeout(tid)
+      done('udp','warn','WebRTC not available in this context \u2014 UDP check skipped.')
+      resolve()
+    }
   })
+}
 
-  await Promise.all(CHECKS.map(({ id }) => RUNNERS[id]()))
+var RUNNERS=[runCaptive,runGoogle,runHttps,runDns,runGeo,runUdp]
 
-  const counts = { ok: 0, warn: 0, fail: 0 }
-  CHECKS.forEach(({ id }) => {
-    const c = $('c-' + id)
-    if (c.classList.contains('ok'))   counts.ok++
-    if (c.classList.contains('warn')) counts.warn++
-    if (c.classList.contains('fail')) counts.fail++
+document.getElementById('run-btn').addEventListener('click',function(){
+  var btn=document.getElementById('run-btn')
+  var grid=document.getElementById('grid')
+  var sum=document.getElementById('sum')
+  btn.disabled=true
+  btn.textContent='Checking\u2026'
+  sum.textContent=''
+  grid.innerHTML=''
+  cards={}
+  DEFS.forEach(function(def){grid.appendChild(mkCard(def))})
+  Promise.allSettled(RUNNERS.map(function(fn){
+    return fn().catch(function(e){console.warn('check failed',e)})
+  })).then(function(){
+    var counts={ok:0,warn:0,fail:0}
+    DEFS.forEach(function(def){
+      var c=cards[def.id];if(!c)return
+      if(c.classList.contains('ok'))   counts.ok++
+      if(c.classList.contains('warn')) counts.warn++
+      if(c.classList.contains('fail')) counts.fail++
+    })
+    var parts=[]
+    if(counts.ok)   parts.push(counts.ok+' ok')
+    if(counts.warn) parts.push(counts.warn+' warning'+(counts.warn>1?'s':''))
+    if(counts.fail) parts.push(counts.fail+' failed')
+    sum.textContent=parts.join(' \u00b7 ')+' \u2014 '+new Date().toLocaleTimeString()
+    btn.disabled=false
+    btn.textContent='Run again'
   })
-
-  const parts = []
-  if (counts.ok)   parts.push(`${counts.ok} ok`)
-  if (counts.warn) parts.push(`${counts.warn} warning${counts.warn > 1 ? 's' : ''}`)
-  if (counts.fail) parts.push(`${counts.fail} failed`)
-  $('summary').textContent = parts.join(' · ') + '  —  ' + new Date().toLocaleTimeString()
-
-  btn.disabled = false
-  btn.textContent = 'Run again'
 })
 </script>
 </body>
